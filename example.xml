@@ -1,0 +1,57 @@
+<?xml version="1.0" ?>
+<chapter>
+    <config speed="1.0" camera="0.0, 0.0, 0.0">
+        <defaultfont>
+            /usr/share/fonts/ttf-koruri-ibx/Koruri-Regular.ttf
+        </defaultfont>
+        <optionalfont name="bold">
+            /usr/share/fonts/ttf-koruri-ibx/Koruri-Selmibold.ttf
+        </optionalfont>
+        <character name="弥生" color="0.187, 0.359, 0.513" font="bold"/>
+        <character name="卯月" color="0.487, 0.051, 0.202"/>
+    </config>
+    <play>
+        <camera/>
+        <screen time="120">
+            <speak name="弥生" wait="24" emotion="true" font="bold" speed="2.0" color="0.0,0.0,0.0">
+                <content>どうも、弥生です</content>
+                <content>怒ってなんかいません</content>
+            </speak>
+        </screen>
+        <screen time="120">
+            <speak name="弥生" emotion="true">
+                <content>無愛想なのでみんなから怖がられてしまうのが悩みです</content>
+            </speak>
+        </screen>
+        <screen time="120">
+            <speak name="弥生" emotion="true">
+                <content>弥生は別に、怒っているわけではなくて・・・</content>
+            </speak>
+        </screen>
+        <camera/>
+        <screen time="120">
+            <speak name="弥生" emotion="true">
+                <content>言いたいことがあるだけです</content>
+            </speak>
+        </screen>
+    </play>
+    <play>
+        <screen time="120">
+            <speak name="卯月">
+                <content>や、弥生・・・</content>
+                <content>怒ってるぴょん？</content>
+            </speak>
+        </screen>
+        <screen time="120">
+            <speak name="弥生">
+                <content>怒ってなんかいません</content>
+            </speak>
+        </screen>
+        <screen time="120">
+            <speak name="弥生">
+                <content>ただ、なぜわざわざ運動場ではなく宿舎の周りで</content>
+                <content>サッカーをしていたのか、その理由が聞きたいだけです</content>
+            </speak>
+        </screen>
+    </play>
+</chapter>
