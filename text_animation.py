@@ -57,7 +57,7 @@ class SetTextAnimation(bpy.types.Operator):
         ob.data.type = 'ORTHO'
         ob.data.clip_start = ob.location[2] - 0.15
         ob.data.clip_end = ob.location[2] + 0.15
-        ob.data.ortho_scale = 20
+        # ob.data.ortho_scale = 20
         # ランプ作成（連携シーン）
         ob = set_lamp(sc_link, 'lamp_link', 'SUN')
         ob.location = (0, 0, 5)
@@ -70,24 +70,6 @@ class SetTextAnimation(bpy.types.Operator):
         ob.data.use_negative = False
         # XML play 取り込み
         read_play(elem, sc_link, sc_main)
-        return {'FINISHED'}
-
-class SyncMarker(bpy.types.Operator):
-    bl_idname = 'scene.sync_marker'
-    bl_label = '全シーンでマーカー同期'
-    bl_description = '現在のシーンを基準に、全シーンでマーカーを同期します'
-    bl_options = {'REGISTER', 'UNDO'}
-
-    def execute(self, context):
-        message = ''
-        for sc in bpy.data.scenes:
-            if sc == bpy.context.scene:
-                continue
-            sync_marker(bpy.context.scene, sc)
-            message += "'" + sc.name + "', "
-        message = message[:-2]
-        message += " were synchornized with '" + bpy.context.scene.name + "'"
-        self.report({'INFO'}, message)
         return {'FINISHED'}
 
 class SetBoneShapeAtOnce(bpy.types.Operator):
@@ -124,8 +106,8 @@ class VIEW3D_PT_InputFilePanel(bpy.types.Panel):
     bl_region_type = 'TOOLS'
     bl_context = 'objectmode'
     bl_idname = 'inputfile'
-    bl_label = 'Text Anim'
-    bl_category = 'Input file'
+    bl_label = 'Text Animation'
+    bl_category = 'Text Anim'
 
     def draw_header(self, context):
         layout = self.layout
@@ -145,7 +127,7 @@ class VIEW3D_PT_SetBoneShapeAtOncePanel(bpy.types.Panel):
     bl_context = ''
     bl_idname = 'setboneatonce'
     bl_label = 'Bone Shape at Once'
-    bl_category = 'Input file'
+    bl_category = 'Text Anim'
 
     def draw(self,context):
         ob = bpy.context.object
@@ -222,7 +204,7 @@ def read_config(elem):
                 config.font[name] = bpy.data.fonts.load(ft.text.strip(), True)
             else:
                 config.font['default'] = bpy.data.fonts.load(ft.text.strip(), True)
-        except RutimeError:
+        except RuntimeError:
             continue
     for ch in elem_conf.findall('.//character'):
         ch_dic = {
@@ -292,22 +274,22 @@ def read_play(elem, sc_link, sc_main):
                 else:
                     sc_link.timeline_markers.new(source_text[len(sp.get('name'))+1:][:5], time)
                     sc_main.timeline_markers.new(source_text[len(sp.get('name'))+1:][:5], time)
-                # keyframes 取り込み
+                # keyframe 取り込み
                 if float(sp.get('speed', '1.0')) == 0:
-                    keyframes = get_keyframes_noanim(source_text, time, end)
+                    keyframe = get_keyframe_noanim(source_text, time, end)
                 elif sp.get('emotion', 'false') == 'true' or sp.get('name') == None:
                     speed = float(sp.get('speed', '1.0'))
-                    keyframes = get_keyframes_nospeak(source_text, speed, time, end)
+                    keyframe = get_keyframe_nospeak(source_text, speed, time, end)
                 else:
                     speed = float(sp.get('speed', '1.0'))
                     start = len(sp.get('name')) + 1
                     t2 = time + float(sp.get('wait', '0'))
-                    keyframes = get_keyframes_speak(source_text, speed, start, time, t2, end)
+                    keyframe = get_keyframe_speak(source_text, speed, start, time, t2, end)
                 # テキストオブジェクト (ob_base, ob_daco) 作成
                 ob_base = set_text(sc_link, 'text_'+'{0:02d}'.format(n_text)+'_base', source_text)
                 ob_deco = set_text(sc_link, 'text_'+'{0:02d}'.format(n_text)+'_deco', source_text)
-                set_text_keyframe(ob_base.data, keyframes)
-                set_text_keyframe(ob_deco.data, keyframes)
+                set_text_keyframe(ob_base.data, keyframe)
+                set_text_keyframe(ob_deco.data, keyframe)
                 ob_base.data.extrude = 0.055
                 ob_deco.data.extrude = 0.000
                 ob_base.data.bevel_depth = 0.00
@@ -411,31 +393,31 @@ def set_text_keyframe(cv, keyframe=[{'count':0,'frame':0}]):
         cv.character_count = kf['count']
         cv.keyframe_insert('character_count', frame=kf['frame'])
 
-def get_keyframes_nospeak(source_text, speed, t1, t2):
-    keyframes = []
-    keyframes.append({'count':0, 'frame':t1})
-    keyframes.append({'count':len(source_text), 'frame':t1 + len(source_text) * speed})
-    keyframes.append({'count':len(source_text), 'frame':t2-1})
-    keyframes.append({'count':0, 'frame':t2})
-    return keyframes
+def get_keyframe_nospeak(source_text, speed, t1, t2):
+    keyframe = []
+    keyframe.append({'count':0, 'frame':t1})
+    keyframe.append({'count':len(source_text), 'frame':t1 + len(source_text) * speed})
+    keyframe.append({'count':len(source_text), 'frame':t2-1})
+    keyframe.append({'count':0, 'frame':t2})
+    return keyframe
 
-def get_keyframes_speak(source_text, speed, start, t1, t2, t3):
-    keyframes = []
-    keyframes.append({'count':0, 'frame':t1})
-    keyframes.append({'count':start, 'frame':t1+1})
-    keyframes.append({'count':start, 'frame':t2})
-    keyframes.append({'count':len(source_text), 'frame':t2 + (len(source_text) - start) * speed})
-    keyframes.append({'count':len(source_text), 'frame':t3-1})
-    keyframes.append({'count':0, 'frame':t3})
-    return keyframes
+def get_keyframe_speak(source_text, speed, start, t1, t2, t3):
+    keyframe = []
+    keyframe.append({'count':0, 'frame':t1})
+    keyframe.append({'count':start, 'frame':t1+1})
+    keyframe.append({'count':start, 'frame':t2})
+    keyframe.append({'count':len(source_text), 'frame':t2 + (len(source_text) - start) * speed})
+    keyframe.append({'count':len(source_text), 'frame':t3-1})
+    keyframe.append({'count':0, 'frame':t3})
+    return keyframe
 
-def get_keyframes_noanim(source_text, t1, t2):
-    keyframes = []
-    keyframes.append({'count':0, 'frame':t1})
-    keyframes.append({'count':len(source_text), 'frame':t1+1})
-    keyframes.append({'count':len(source_text), 'frame':t2-1})
-    keyframes.append({'count':0, 'frame':t2})
-    return keyframes
+def get_keyframe_noanim(source_text, t1, t2):
+    keyframe = []
+    keyframe.append({'count':0, 'frame':t1})
+    keyframe.append({'count':len(source_text), 'frame':t1+1})
+    keyframe.append({'count':len(source_text), 'frame':t2-1})
+    keyframe.append({'count':0, 'frame':t2})
+    return keyframe
 
 def sync_marker(sc_from, sc_to):
     for mk_from in sc_from.timeline_markers:
@@ -446,22 +428,13 @@ def sync_marker(sc_from, sc_to):
 # 6. menu_fn/register/unregister/register_shortcut/unregister_shortcut
 # ------------------------------------------------------------------------------
 
+'''
 addon_keymaps = []
 
 def register_shortcut():
     wm = bpy.context.window_manager
     kc = wm.keyconfigs.addon
     if kc:
-        km = kc.keymaps.new(name='Dopesheet', space_type='DOPESHEET_EDITOR')
-        kmi = km.keymap_items.new(
-            idname=SyncMarker.bl_idname,
-            type='M',
-            value='PRESS',
-            shift=False,
-            ctrl=True,
-            alt=True
-        )
-        addon_keymaps.append((km, kmi))
 
 def unregister_shortcut():
     for km, kmi in addon_keymaps:
@@ -470,17 +443,17 @@ def unregister_shortcut():
 
 def menu_fn(self, context):
     self.layout.separator()
-    self.layout.operator(SyncMarker.bl_idname)
+'''
 
 def register():
     bpy.utils.register_module(__name__)
     bpy.types.Scene.xml_filepath = bpy.props.PointerProperty(type=XMLFilePathProp)
-    bpy.types.DOPESHEET_MT_marker.append(menu_fn)
-    register_shortcut()
+    # bpy.types.DOPESHEET_MT_marker.append(menu_fn)
+    # register_shortcut()
 
 def unregister():
-    unregister_shortcut()
-    bpy.types.DOPESHEET_MT_marker.remove(menu_fn)
+    # unregister_shortcut()
+    # bpy.types.DOPESHEET_MT_marker.remove(menu_fn)
     bpy.utils.unregister_module(__name__)
     del bpy.types.Scene.xml_filepath
 

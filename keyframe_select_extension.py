@@ -168,6 +168,23 @@ class SelectMarkerSelected(bpy.types.Operator):
                 select_marker_timeline(time)
         return {'FINISHED'}
 
+class SyncMarker(bpy.types.Operator):
+    bl_idname = 'scene.sync_marker'
+    bl_label = '全シーンでマーカー同期'
+    bl_description = '現在のシーンを基準に全シーンでマーカーを同期します'
+    bl_options = {'REGISTER', 'UNDO'}
+
+    def execute(self, context):
+        message = ''
+        for sc in bpy.data.scenes:
+            if sc == bpy.context.scene:
+                continue
+            sync_marker(bpy.context.scene, sc)
+            message += "'" + sc.name + "', "
+        message = message[:-2]
+        message += " were synchornized with '" + bpy.context.scene.name + "'"
+        self.report({'INFO'}, message)
+        return {'FINISHED'}
 
 # ------------------------------------------------------------------------------
 # 3. Panel class
@@ -352,6 +369,16 @@ def register_shortcut():
             alt=False
         )
         addon_keymaps.append((km, kmi))
+        km = kc.keymaps.new(name='Dopesheet', space_type='DOPESHEET_EDITOR')
+        kmi = km.keymap_items.new(
+            idname=SyncMarker.bl_idname,
+            type='M',
+            value='PRESS',
+            shift=False,
+            ctrl=True,
+            alt=True
+        )
+        addon_keymaps.append((km, kmi))
 
 def unregister_shortcut():
     for km, kmi in addon_keymaps:
@@ -359,6 +386,8 @@ def unregister_shortcut():
     addon_keymaps.clear()
 
 def menu_fn(self, context):
+    self.layout.separator()
+    self.layout.operator(SyncMarker.bl_idname)
     self.layout.separator()
     self.layout.menu(KeyframeSelectMenu.bl_idname)
 

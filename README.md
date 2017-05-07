@@ -1,73 +1,78 @@
-# Blender Addon 構造
-## 1. bl\_info
-```
-name
-author
-version
-blender
-location
-description
-warning
-support
-wiki_url
-tracker_url
-category
-```
+# キーフレーム選択拡張 - keyframe\_select\_extension.py
+## 本アドオンについて
+キーフレームやマーカの操作をショートカットキーにより便利に操作できるようにするためのアドオン。
 
-## 2. Operator class (bpy.types.Operator)
-```
-bl_idname
-bl_label
-bl_description
-bl_options
-def execute(self, context)
-  return {'FINISHED'}
-```
+## Operator class
+- action.select\_keyframe\_right (Ctrl + RIGHT\_BRACKET)
+  - 選択中のキーフレームの右を追加で選択
+- action.select\_keyframe\_left (Ctrl + LEFT\_BRACKET)
+  - 選択中のキーフレームの左を追加で選択
+- action.deselect\_keyframe\_right (Ctrl + Alt + RIGHT\_BRACKET)
+  - 選択中のキーフレームの右を選択解除
+- action.deselect\_keyframe\_left (Ctrl + Alt + LEFT\_BRACKET)
+  - 選択中のキーフレームの左を選択解除
+- action.shift\_keyframe\_right (Shift + PERIOD)
+  - キーフレーム選択を右に移動
+- action.shift\_keyframe\_left (Shift + COMMA)
+  - キーフレーム選択を左に移動
+- action.move\_keyframe\_right (Ctrl + RIGHT\_ARROW)
+  - 選択中のキーフレームを右に移動
+- action.move\_keyframe\_left (Ctrl + LEFT\_ARROW)
+  - 選択中のキーフレームを左に移動
+- action.select\_marker\_selected (Shift + M)
+  - 選択中のキーフレームと同フレームのマーカーを選択
+- scene.sync\_marker (Ctrl + Alt + M)
+  - 現在のシーンを基準に全シーンでマーカーを同期
 
-## 3. Panel class(bpy.types.Panel)
-```
-bl_space_type
-bl_region_type
-bl_context
-bl_idname
-bl_label
-bl_category
-def draw(self, context)
-```
-
-## 4. Property Group class (bpy.tepes.PropertyGroup)
-
-## 5. function
-
-## 6. menu\_fn, register, unregister
-```
-def menu_fn(self, context)
-def register()
-  bpy.types.INFO_MT_mesh_add.append(menu_fn)
-  bpy.utils.register_module(__name__)
-  bpy.types.Scene.mmdrama_inputfile = bpy.props.PointerProperty(type=FilepathProp)
-def unregister()
-  bpy.utils.unregister_module(__name__)
-  bpy.types.INFO_MT_mesh_add.remove(menu_fn)
-  del bpy.types.Scene.mmdrama_inputfile
-```
+## function
+- Operator class でよく使う関数
+- fc (bpy.types.FCurve) : キーフレームのデータタイプ (アクセス例 : bpy.context.object.animation\_data.action.fcurves[0])
+- index : 整数リスト、FCurve のインデックスを指定
+- time : 整数リスト、FCurve のフレームを指定
+- 関数一覧
+  - get\_index\_selectedkeyframe(fc)-> index
+  - get\_frame\_selectedkeyframe(fc)-> time
+  - select\_keyframe\_timeline(fc, time)
+  - deselect\_keyframe\_timeline(fc, time)
+  - select\_keyframe\_index(fc, index)
+  - deselect\_keyframe\_index(fc, index)
+  - select\_marker\_timline(time)
+  - move\_keyframe(fc, index, x)
+  - move\_marker(x)
 
 # テキストアニメーション - text\_animatin.py
-## オブジェクト初期化
-- メインシーン
-  - マーカー消去
-  - カメラそのまま
-- テキストシーン
-  - マーカー消去
-  - カメラそのまま
-  - ランプそのまま
-  - テキスト消去
-- set\_text(), set\_camera() で、オブジェクトがあってもそのままそれを返すようにする
+## 本アドオンについて
+XML ファイルから設定を読み込み、テキストオブジェクトのアニメーションを自動で作成するもの。
+カメラの切り替えやマーカーの作成も行う。
+ついでに、ボーン形状の一括変更も同じツールシェルフから行える。
 
-# キーフレーム選択拡張 - keyframe\_select\_extension.py
-- キーフレームを操作してマーカーを更新 (use\_marker\_sync = True)
-- キーフレーム選択を強化するオペレータ
-- 連携しているシーン同士でマーカーを同期 (カメラのバインドは維持しない)
+Dope Sheet > View > Sync Markers にチェックを入れて編集すること
+
+## Operator class
+- SetTextAnimation
+- SetBoneShapeAtOnce
+
+## function
+- 関数一覧
+  - import\_xml(file\_path) -> elem
+  - read\_config(elem)
+  - read\_play(elem, sc\_link, sc\_main)
+  - init\_object(sc, pattern, ob\_type)
+  - init\_marker(sc)
+  - set\_text(sc, name, source\_text) -> ob
+  - set\_camera(sc, name) -> ob
+  - set\_lamp(sc, name, lamp\_type) -> ob
+  - set\_text\_keyframe(sc, keyframe)
+  - get\_keyframe\_nospeak(source\_text, speed, t1, t2) -> keyframe
+  - get\_keyframe\_speak(source\_text, speed, start, t1, t2, t3) -> keyframe
+  - get\_keyframe\_noanim(source\_text, t1, t2) -> keyframe
+  - sync\_marker(sc\_from, sc\_to)
+
+## 実装を見送った機能
+- シーン・フォント選択をツールシェルフに表示
+  - 表示させる方法がわからなかったのでパス
+- シーン同士のノード接続
+  - 毎回少しずつ変わるからいいかな・・・
 
 # 参考
 - [Blender API documentation](https://docs.blender.org/api)
